@@ -1,0 +1,17 @@
+{
+  "name": "smart",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix SmartWasteBackend\" \"npm run dev --prefix SmartWasteMain\"",
+    "install-all": "npm install --prefix SmartWasteBackend && npm install --prefix SmartWasteMain"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.0"
+  }
+}
