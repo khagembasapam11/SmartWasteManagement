@@ -24,7 +24,10 @@ mongoose
   .then(() => console.log("✓ MongoDB connected"))
   .catch((err) => {
     console.error("✗ MongoDB connection error:", err.message);
-    process.exit(1);
+    // Don't exit process in serverless environments, let Mongoose handle it
+    if (process.env.NODE_ENV !== "production") {
+      process.exit(1);
+    }
   });
 
 // Routes

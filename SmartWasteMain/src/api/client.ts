@@ -79,8 +79,19 @@ export async function apiCall<T>(
   });
 
   if (!response.ok) {
-    const error: ApiError = await response.json();
-    throw new Error(error.error || `API error: ${response.status}`);
+    let errorMessage = `API error: ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } catch (e) {
+      // If the response is not valid JSON (e.g. Vercel 500 HTML page)
+      const text = await response.text().catch(() => "");
+      if (text) {
+        // Only take the first 100 characters to avoid huge HTML dumps
+        errorMessage = text.substring(0, 100);
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json() as Promise<T>;
