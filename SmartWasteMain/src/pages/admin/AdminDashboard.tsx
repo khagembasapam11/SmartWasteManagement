@@ -315,7 +315,28 @@ function ManageReports({
               <Select value={worker} onValueChange={setWorker}>
                 <SelectTrigger><SelectValue placeholder="Select a worker" /></SelectTrigger>
                 <SelectContent>
-                  {workers.map((w) => <SelectItem key={w._id} value={w._id}>{w.name}</SelectItem>)}
+                  {[...workers]
+                    .sort((a, b) => {
+                      const activeA = data.filter((r) => getPersonId(r.assignedTo) === a._id && r.status !== "completed").length;
+                      const activeB = data.filter((r) => getPersonId(r.assignedTo) === b._id && r.status !== "completed").length;
+                      return (activeA > 0 ? 1 : 0) - (activeB > 0 ? 1 : 0);
+                    })
+                    .map((w) => {
+                    const activeTasks = data.filter((r) => getPersonId(r.assignedTo) === w._id && r.status !== "completed").length;
+                    const isBusy = activeTasks > 0;
+                    return (
+                      <SelectItem key={w._id} value={w._id} disabled={isBusy}>
+                        <div className="flex items-center gap-2">
+                          <span>{w.name}</span>
+                          {isBusy ? (
+                            <span className="text-[10px] uppercase font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-sm">At work</span>
+                          ) : (
+                            <span className="text-[10px] uppercase font-bold text-success bg-success/10 px-1.5 py-0.5 rounded-sm">Available</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>

@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm run build --prefix SmartWasteMain",
+  "outputDirectory": "SmartWasteMain/dist",
+  "installCommand": "npm install --prefix SmartWasteMain"
+}
