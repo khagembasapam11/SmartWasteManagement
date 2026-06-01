@@ -1,5 +1,29 @@
 {
-  "buildCommand": "npm run build --prefix SmartWasteMain",
-  "outputDirectory": "SmartWasteMain/dist",
-  "installCommand": "npm install --prefix SmartWasteMain"
+  "version": 2,
+  "builds": [
+    {
+      "src": "SmartWasteBackend/server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "SmartWasteMain/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/SmartWasteBackend/server.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }

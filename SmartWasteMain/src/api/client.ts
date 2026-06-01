@@ -1,7 +1,9 @@
 import type { ReportStatus, Role, WasteType } from "@/lib/types";
 
 let API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
-if (!API_BASE_URL || API_BASE_URL.includes("localhost")) {
+if (import.meta.env.PROD) {
+  API_BASE_URL = API_BASE_URL || "/api";
+} else if (!API_BASE_URL || API_BASE_URL.includes("localhost")) {
   API_BASE_URL = `http://${window.location.hostname}:3001/api`;
 }
 
