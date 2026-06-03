@@ -23,15 +23,26 @@ export interface ApiUser {
 export interface ApiReport {
   _id: string;
   location: string;
+  description?: string;
   type: WasteType;
   status: ReportStatus;
-  reporter?: string | ApiUser;
-  assignedTo?: string | ApiUser;
-  createdAt: string;
-  rewarded?: boolean;
-  description?: string;
-  coords: { lat: number; lng: number };
+  reporter?: ApiUser | string;
+  assignedTo?: ApiUser | string;
   photo?: string;
+  coords?: { lat: number; lng: number };
+  createdAt: string;
+  completedAt?: string;
+  rewarded?: boolean;
+}
+
+export interface ApiSession {
+  _id: string;
+  sessionType: "morning" | "evening";
+  status: "pending" | "active" | "collected" | "completed";
+  assignedTo?: ApiUser | string;
+  reports: ApiReport[];
+  centerCoords: { lat: number; lng: number };
+  createdAt: string;
 }
 
 export interface ApiBin {
@@ -170,15 +181,16 @@ export const reportsApi = {
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    apiCall<{ message: string }>(`/reports/${id}`, {
+  delete: async (id: string) => {
+    return apiCall<{ message: string }>(`/reports/${id}`, {
       method: "DELETE",
-    }),
-
-  rewardWorker: (id: string) =>
-    apiCall<ApiReport>(`/reports/${id}/reward`, {
+    });
+  },
+  rewardWorker: async (id: string) => {
+    return apiCall<ApiReport>(`/reports/${id}/reward`, {
       method: "POST",
-    }),
+    });
+  },
 };
 
 // Bins API
@@ -213,6 +225,30 @@ export const binsApi = {
     apiCall<{ message: string }>(`/bins/${id}`, {
       method: "DELETE",
     }),
+};
+
+export const sessionsApi = {
+  getAll: async (params?: Record<string, string>) => {
+    const query = params ? `?${new URLSearchParams(params)}` : "";
+    return apiCall<ApiSession[]>(`/sessions${query}`);
+  },
+  generate: async (sessionType: "morning" | "evening") => {
+    return apiCall<ApiSession[]>("/sessions/generate", {
+      method: "POST",
+      body: JSON.stringify({ sessionType }),
+    });
+  },
+  claimNearest: async (lat?: number, lng?: number) => {
+    return apiCall<ApiSession>("/sessions/claim-nearest", {
+      method: "POST",
+      body: JSON.stringify({ lat, lng }),
+    });
+  },
+  complete: async (id: string) => {
+    return apiCall<ApiSession>(`/sessions/${id}/complete`, {
+      method: "PATCH",
+    });
+  },
 };
 
 // Users API

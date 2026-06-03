@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ClipboardList, FileText, CheckCircle2, MapPin, Upload, Image as ImageIcon, Bell, Sparkles } from "lucide-react";
+import { ClipboardList, FileText, CheckCircle2, MapPin, Upload, Image as ImageIcon, Bell, Sparkles, Bus, Building, Ticket, Leaf } from "lucide-react";
 import { type WasteType } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -594,17 +594,19 @@ function ReportMap() {
 
 function Rewards() {
   const items = [
-    { title: "Plant a Tree", cost: 500, desc: "We'll plant a tree in your name in the city park.", icon: "🌱" },
-    { title: "Bus Pass Discount", cost: 200, desc: "Get a 20% discount on your next monthly bus pass.", icon: "🚌" },
-    { title: "Eco-Warrior Badge", cost: 100, desc: "A shiny badge for your profile and social media.", icon: "🏆" },
-    { title: "Coffee Voucher", cost: 150, desc: "Free coffee at any participating local cafe.", icon: "☕" },
+    { title: "ASTC City Bus Pass", cost: 200, desc: "Get a free daily pass for ASTC City Buses.", icon: Bus },
+    { title: "Property Tax Discount", cost: 1000, desc: "Redeem 5% off on your next municipal property tax.", icon: Building },
+    { title: "State Zoo Ticket", cost: 150, desc: "One free adult entry to the Assam State Zoo.", icon: Ticket },
+    { title: "Plant a Tree", cost: 500, desc: "We'll plant a tree in your name in a city park.", icon: Leaf },
   ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {items.map((i) => (
-        <Card key={i.title} className="p-5 flex items-start gap-4 transition hover:shadow-glow">
-          <div className="text-3xl">{i.icon}</div>
+        <Card key={i.title} className="p-5 flex items-start gap-4 transition hover:-translate-y-1 hover:shadow-glow">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+            <i.icon className="h-6 w-6" />
+          </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg">{i.title}</h3>
             <p className="text-sm text-muted-foreground mt-1">{i.desc}</p>

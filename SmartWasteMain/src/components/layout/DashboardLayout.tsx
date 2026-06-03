@@ -30,6 +30,7 @@ const navByRole = {
     { title: "Report Waste", url: "/user/report", icon: FileText },
     { title: "My Reports", url: "/user/reports", icon: ClipboardList },
     { title: "Report Map", url: "/user/map", icon: Map },
+    { title: "Eco-Rewards", url: "/user/rewards", icon: Award },
   ],
   admin: [
     { title: "Overview", url: "/admin", icon: LayoutDashboard },
@@ -350,10 +351,10 @@ export default function DashboardLayout({ children, title }: { children: ReactNo
             </div>
             <div className="flex items-center gap-2 md:gap-4">
               {(user?.role === 'user' || user?.role === 'worker') && (
-                <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 border border-primary/20 shadow-glow animate-pulse-glow">
+                <Link to={`/${user?.role}/rewards`} className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 border border-primary/20 shadow-glow animate-pulse-glow hover:bg-primary/20 transition-colors">
                   <Award className="h-4 w-4 text-primary" />
                   <span className="text-sm font-bold text-primary">{user?.points || 0} <span className="hidden sm:inline">pts</span></span>
-                </div>
+                </Link>
               )}
               <NotificationBell />
               <div 

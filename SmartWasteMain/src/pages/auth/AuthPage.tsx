@@ -1,5 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { apiCall } from "@/api/client";
 import { Recycle, Mail, Lock, User as UserIcon, Shield, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,9 @@ import { Loader2 } from "lucide-react";
 export default function AuthPage({ mode }: Props) {
   const { login, register } = useAuth();
   const nav = useNavigate();
-  const [role, setRole] = useState<Role>("user");
+  const [searchParams] = useSearchParams();
+  const isAdminHidden = searchParams.get("admin") === "true";
+  const [role, setRole] = useState<Role>(isAdminHidden ? "admin" : "user");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,6 +35,23 @@ export default function AuthPage({ mode }: Props) {
   const [location, setLocation] = useState("");
   const [swmCode, setSwmCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ reports: "12K+", resolved: "98%", workers: "240" });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const data = await apiCall<{ reports: number; resolved: string; workers: number }>("/stats");
+        setStats({
+          reports: data.reports.toString(),
+          resolved: data.resolved,
+          workers: data.workers.toString()
+        });
+      } catch (err) {
+        console.error("Failed to load stats", err);
+      }
+    };
+    loadStats();
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +65,7 @@ export default function AuthPage({ mode }: Props) {
     }
 
     if (mode === "register" && role === "worker") {
-      if (!phone || !address || !location || !swmCode) {
+      if (!phone || !address || !swmCode) {
         return toast.error("Please fill all worker details");
       }
     }
@@ -77,16 +97,12 @@ export default function AuthPage({ mode }: Props) {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-gradient-hero lg:block">
-        <div className="absolute inset-0 opacity-20">
-          <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1.5" fill="white" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#dots)" />
-          </svg>
+      <div className="relative hidden overflow-hidden lg:block">
+        <div className="absolute inset-0 z-0">
+          <img src="/hero-bg.jpg" alt="Smart City" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px]"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/60 to-black/90 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
         </div>
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
           <Link to="/" className="flex items-center gap-3">
@@ -100,9 +116,9 @@ export default function AuthPage({ mode }: Props) {
             </p>
             <div className="grid grid-cols-3 gap-4 pt-6">
               {[
-                { v: "12K+", l: "Reports" },
-                { v: "98%", l: "Resolved" },
-                { v: "240", l: "Workers" },
+                { v: stats.reports, l: "Reports" },
+                { v: stats.resolved, l: "Resolved" },
+                { v: stats.workers, l: "Workers" },
               ].map((s) => (
                 <div key={s.l} className="rounded-xl bg-white/10 p-3 backdrop-blur">
                   <p className="text-2xl font-bold">{s.v}</p>
@@ -132,8 +148,8 @@ export default function AuthPage({ mode }: Props) {
           <form onSubmit={submit} className="mt-6 space-y-4">
             <div>
               <Label className="mb-2 block">Select role</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {roles.map((r) => {
+              <div className={`grid gap-2 ${isAdminHidden ? "grid-cols-1" : "grid-cols-2"}`}>
+                {roles.filter(r => isAdminHidden ? r.id === "admin" : r.id !== "admin").map((r) => {
                   const active = role === r.id;
                   return (
                     <button
@@ -177,17 +193,12 @@ export default function AuthPage({ mode }: Props) {
                     <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter full address" className="pl-3" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="relative">
-                    <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Enter location" className="pl-3" />
-                  </div>
-                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="swmCode">6 digit code from GMC</Label>
                   <div className="relative">
                     <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input id="swmCode" type="text" value={swmCode} onChange={(e) => setSwmCode(e.target.value)} placeholder="123456" className="pl-9" />
+                    <Input id="swmCode" type="text" maxLength={6} value={swmCode} onChange={(e) => setSwmCode(e.target.value)} placeholder="123456" className="pl-9" />
                   </div>
                 </div>
               </>

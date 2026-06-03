@@ -1,6 +1,7 @@
 import express from "express";
 import Report from "../models/Report.js";
 import User from "../models/User.js";
+import SessionRoute from "../models/SessionRoute.js";
 import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -118,6 +119,31 @@ router.patch("/:id", protect, async (req, res) => {
 
     if (assignedTo && req.user.role === "admin") {
       report.assignedTo = assignedTo;
+      report.status = "assigned";
+
+      let activeSession = await SessionRoute.findOne({ assignedTo, status: "active" });
+      if (!activeSession) {
+        activeSession = await SessionRoute.findOne({ assignedTo, status: "pending" });
+      }
+
+      if (activeSession) {
+        if (!activeSession.reports.includes(report._id)) {
+          activeSession.reports.push(report._id);
+          const n = activeSession.reports.length;
+          activeSession.centerCoords.lat = ((activeSession.centerCoords.lat * (n - 1)) + report.coords.lat) / n;
+          activeSession.centerCoords.lng = ((activeSession.centerCoords.lng * (n - 1)) + report.coords.lng) / n;
+          await activeSession.save();
+        }
+      } else {
+        const newSession = new SessionRoute({
+          sessionType: "morning",
+          reports: [report._id],
+          centerCoords: report.coords,
+          assignedTo,
+          status: "active"
+        });
+        await newSession.save();
+      }
     }
 
     await report.save();

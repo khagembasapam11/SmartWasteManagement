@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import Report from "../models/Report.js";
+import SessionRoute from "../models/SessionRoute.js";
 import { protect, authorize } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -65,6 +66,35 @@ router.post("/:workerId/assign/:reportId", protect, authorize("admin"), async (r
       await worker.save();
     }
 
+    const oldSession = await SessionRoute.findOne({ reports: report._id });
+    if (oldSession && oldSession.assignedTo?.toString() !== worker._id.toString()) {
+      oldSession.reports = oldSession.reports.filter(id => id.toString() !== report._id.toString());
+      if (oldSession.reports.length === 0) await SessionRoute.findByIdAndDelete(oldSession._id);
+      else await oldSession.save();
+    }
+
+    let activeSession = await SessionRoute.findOne({ assignedTo: worker._id, status: "active" });
+    if (!activeSession) activeSession = await SessionRoute.findOne({ assignedTo: worker._id, status: "pending" });
+    
+    if (activeSession) {
+      if (!activeSession.reports.includes(report._id)) {
+        activeSession.reports.push(report._id);
+        const n = activeSession.reports.length;
+        activeSession.centerCoords.lat = ((activeSession.centerCoords.lat * (n - 1)) + report.coords.lat) / n;
+        activeSession.centerCoords.lng = ((activeSession.centerCoords.lng * (n - 1)) + report.coords.lng) / n;
+        await activeSession.save();
+      }
+    } else {
+      const newSession = new SessionRoute({
+        sessionType: "morning",
+        reports: [report._id],
+        centerCoords: report.coords,
+        assignedTo: worker._id,
+        status: "active"
+      });
+      await newSession.save();
+    }
+
     res.json({
       message: "Task assigned",
       report: await report.populate([
@@ -99,6 +129,13 @@ router.post("/:workerId/unassign/:reportId", protect, authorize("admin"), async 
       (taskId) => taskId.toString() !== report._id.toString()
     );
     await worker.save();
+
+    const oldSession = await SessionRoute.findOne({ reports: report._id });
+    if (oldSession) {
+      oldSession.reports = oldSession.reports.filter(id => id.toString() !== report._id.toString());
+      if (oldSession.reports.length === 0) await SessionRoute.findByIdAndDelete(oldSession._id);
+      else await oldSession.save();
+    }
 
     res.json({ message: "Task unassigned" });
   } catch (err) {

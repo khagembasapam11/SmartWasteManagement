@@ -7,6 +7,7 @@ import reportRoutes from "./routes/reports.js";
 import binRoutes from "./routes/bins.js";
 import workerRoutes from "./routes/workers.js";
 import userRoutes from "./routes/users.js";
+import sessionRoutes from "./routes/sessions.js";
 
 dotenv.config();
 
@@ -36,10 +37,36 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/bins", binRoutes);
 app.use("/api/workers", workerRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/sessions", sessionRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
+});
+
+import Report from "./models/Report.js";
+import User from "./models/User.js";
+import Bin from "./models/Bin.js";
+
+// Public stats
+app.get("/api/stats", async (req, res) => {
+  try {
+    const [totalReports, completedReports, workers, bins] = await Promise.all([
+      Report.countDocuments(),
+      Report.countDocuments({ status: "completed" }),
+      User.countDocuments({ role: "worker" }),
+      Bin.countDocuments()
+    ]);
+    const resolvedPercent = totalReports === 0 ? "0%" : `${Math.round((completedReports / totalReports) * 100)}%`;
+    res.json({
+      reports: totalReports,
+      resolved: resolvedPercent,
+      workers: workers,
+      bins: bins
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 404 handler

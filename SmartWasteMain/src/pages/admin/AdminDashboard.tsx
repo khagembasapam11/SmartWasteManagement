@@ -12,9 +12,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ClipboardList, AlertTriangle, CheckCircle2, Users, Search, TrendingUp, Activity, Bell } from "lucide-react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { format, subDays } from "date-fns";
 import { type WasteType } from "@/lib/types";
-import { reportsApi, workersApi, type ApiReport, type ApiUser, type ApiWorker } from "@/api/client";
+import { reportsApi, workersApi, sessionsApi, type ApiReport, type ApiUser, type ApiWorker, type ApiSession } from "@/api/client";
 import { toast } from "sonner";
 import { Routes, Route, useLocation } from "react-router-dom";
 
@@ -227,9 +228,14 @@ function ManageReports({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search id, location, reporter..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button size="sm" className="bg-primary text-white hover:bg-primary/90 shadow-sm" onClick={async () => {
+            try { await sessionsApi.generate("morning"); toast.success("Smart Routes Generated Successfully!"); window.location.reload(); }
+            catch (e) { toast.error("Failed to generate routes"); }
+          }}>Auto-Route Pending</Button>
+          <div className="w-px h-6 bg-border mx-2"></div>
           <Select value={type} onValueChange={setType}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All types</SelectItem>
               <SelectItem value="wet">Wet</SelectItem>
@@ -238,11 +244,11 @@ function ManageReports({
             </SelectContent>
           </Select>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="assigned">Assigned</SelectItem>
+              <SelectItem value="assigned">Assigned (In Route)</SelectItem>
               <SelectItem value="collected">Collected (In Transit)</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
@@ -325,7 +331,7 @@ function ManageReports({
                     const activeTasks = data.filter((r) => getPersonId(r.assignedTo) === w._id && r.status !== "completed").length;
                     const isBusy = activeTasks > 0;
                     return (
-                      <SelectItem key={w._id} value={w._id} disabled={isBusy}>
+                      <SelectItem key={w._id} value={w._id}>
                         <div className="flex items-center gap-2">
                           <span>{w.name}</span>
                           {isBusy ? (
@@ -475,6 +481,7 @@ const titles: Record<string, string> = {
 export default function AdminDashboard() {
   const [data, setData] = useState<ApiReport[]>([]);
   const [workers, setWorkers] = useState<ApiWorker[]>([]);
+  const [sessions, setSessions] = useState<ApiSession[]>([]);
   const [loading, setLoading] = useState(true);
   const { pathname } = useLocation();
 
@@ -483,13 +490,15 @@ export default function AdminDashboard() {
 
     const load = async (showErrors = true) => {
       try {
-        const [reports, workerList] = await Promise.all([
+        const [reports, workerList, sessionList] = await Promise.all([
           reportsApi.getAll(),
           workersApi.getAll(),
+          sessionsApi.getAll(),
         ]);
         if (!active) return;
         setData(reports);
         setWorkers(workerList);
+        setSessions(sessionList);
       } catch (error) {
         if (showErrors) {
           const message = error instanceof Error ? error.message : "Failed to load admin data";
@@ -533,3 +542,5 @@ export default function AdminDashboard() {
     </DashboardLayout>
   );
 }
+
+// Ensure the sidebar navigation knows about these routes if needed. (Skipping sidebar update for brevity)
