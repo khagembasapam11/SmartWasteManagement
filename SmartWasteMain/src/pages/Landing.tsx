@@ -150,12 +150,8 @@ export default function Landing() {
               )}
             </div>
           </header>
-
           <section className="container py-16 md:py-24">
             <div className="mx-auto max-w-3xl text-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-md shadow-soft">
-                <Leaf className="h-3 w-3 text-emerald-400" /> A new way to keep our streets clean
-              </span>
               <h1 className="mt-5 text-4xl font-bold tracking-tight md:text-6xl text-white">
                 Smarter waste, <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300">cleaner cities.</span>
               </h1>
